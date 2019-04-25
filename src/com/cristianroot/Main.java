@@ -6,39 +6,32 @@ import java.util.stream.IntStream;
 
 public class Main {
 
-	private static int clues[] = {
-			0, 0, 1, 2,
-			0, 2, 0, 0,
-			0, 3, 0, 0,
-			0, 1, 0, 0
-	};
-
-	private static int outcomes[][] = {
-			{2, 1, 4, 3},
-			{3, 4, 1, 2},
-			{4, 2, 3, 1},
-			{1, 3, 2, 4}
+	private static int[] clues = {
+			2, 2, 1, 3,
+			2, 2, 3, 1,
+			1, 2, 2, 3,
+			3, 2, 1, 3
 	};
 
 	public static void main(String[] args) {
-		// Initialize
 		int[][] splittedClues = new int[4][4];
 		for (int i = 0; i < clues.length; i++) {
 			splittedClues[i / 4][i % 4] = clues[i];
 		}
+		reverse(splittedClues[2]);
 		reverse(splittedClues[3]);
 
-//		int[][] solution = new int[4][4];
-//		for (int i = 0; i < solution.length; i++) {
-//			for (int j = 0; j < solution[i].length; j++) {
-//				solution[i][j] = -1;
-//			}
-//		}
-//
-//		solveRecursive(0, 0, solution, splittedClues);
-//
-//		print(solution);
-		System.out.println("Valid: " + validate(splittedClues, outcomes));
+		int[][] solution = new int[4][4];
+		for (int i = 0; i < solution.length; i++) {
+			for (int j = 0; j < solution[i].length; j++) {
+				solution[i][j] = -1;
+			}
+		}
+
+		solveRecursive(0, 0, solution, splittedClues);
+
+		print(solution);
+		System.out.println("Valid: " + validate(splittedClues, solution));
 	}
 
 	private static boolean solveRecursive(int i, int j, int[][] solution, int[][] clues) {
