@@ -7,14 +7,14 @@ import java.util.stream.IntStream;
 public class Main {
 
 	private static int[] clues = {
-			0, 0, 1, 2,
-			0, 2, 0, 0,
-			0, 3, 0, 0,
-			0, 1, 0, 0
+			3, 2, 2, 3, 2, 1,
+			1, 2, 3, 3, 2, 2,
+			5, 1, 2, 2, 4, 3,
+			3, 2, 1, 2, 2, 4
 	};
 
 	private static int[][] splittedClues;
-	private static final int SIZE = 4;
+	private static final int SIZE = 6;
 
 	/**
 	 * Main method, equivalent to 'solvePuzzle' method of the kata
@@ -44,7 +44,7 @@ public class Main {
 			i++;
 		}
 
-		List<Integer> possibilities = IntStream.range(1, 5).boxed().collect(Collectors.toList());
+		List<Integer> possibilities = IntStream.range(1, SIZE + 1).boxed().collect(Collectors.toList());
 		boolean solved;
 
 		do {
@@ -62,7 +62,7 @@ public class Main {
 	private static int[][] splitClues(int[] clues) {
 		int[][] splittedClues = new int[4][SIZE];
 		for (int i = 0; i < clues.length; i++) {
-			splittedClues[i / 4][i % SIZE] = clues[i];
+			splittedClues[i / SIZE][i % SIZE] = clues[i];
 		}
 		reverse(splittedClues[2]);
 		reverse(splittedClues[3]);
@@ -75,7 +75,7 @@ public class Main {
 
 	private static boolean validateColumns(int[][] solution) {
 		for (int i = 0; i < solution.length; i++) {
-			int[] column = new int[4];
+			int[] column = new int[SIZE];
 			for (int j = 0; j < solution[i].length; j++) {
 				column[j] = solution[j][i];
 			}
@@ -140,7 +140,7 @@ public class Main {
 			if (cluePortion[i] == 0)
 				continue;
 
-			int[] evaluate = new int[4];
+			int[] evaluate = new int[SIZE];
 			for (int j = 0; j < solution.length; j++) {
 				evaluate[j] = solution[j][i];
 			}
@@ -155,7 +155,7 @@ public class Main {
 			if (cluePortion[i] == 0)
 				continue;
 
-			int[] evaluate = new int[4];
+			int[] evaluate = new int[SIZE];
 			for (int j = solution.length - 1; j >= 0; j--) {
 				evaluate[solution.length - 1 - j] = solution[i][j];
 			}
@@ -170,7 +170,7 @@ public class Main {
 			if (cluePortion[i] == 0)
 				continue;
 
-			int[] evaluate = new int[4];
+			int[] evaluate = new int[SIZE];
 			for (int j = solution.length - 1; j >= 0; j--) {
 				evaluate[solution.length - 1 - j] = solution[j][i];
 			}
@@ -185,7 +185,7 @@ public class Main {
 			if (cluePortion[i] == 0)
 				continue;
 
-			int[] evaluate = new int[4];
+			int[] evaluate = new int[SIZE];
 			for (int j = 0; j < solution.length; j++) {
 				evaluate[j] = solution[i][j];
 			}
@@ -200,7 +200,7 @@ public class Main {
 	private static void print(int[][] arr) {
 		for (int j = 0; j < arr.length; j++) {
 			System.out.print(" ");
-			for (int k = 0; k < arr.length - 1; k++) {
+			for (int k = 0; k < 3; k++) {
 				System.out.print("_");
 			}
 		}
