@@ -7,10 +7,10 @@ import java.util.stream.IntStream;
 public class Main {
 
 	private static int[] clues = {
-			3, 2, 2, 3, 2, 1,
-			1, 2, 3, 3, 2, 2,
-			5, 1, 2, 2, 4, 3,
-			3, 2, 1, 2, 2, 4
+			0, 0, 0, 2, 2, 0,
+			0, 0, 0, 6, 3, 0,
+			0, 4, 0, 0, 0, 0,
+			4, 4, 0, 3, 0, 0
 	};
 
 	private static int[][] splittedClues;
@@ -109,26 +109,30 @@ public class Main {
 	}
 
 	private static boolean validateClue(int clue, int[] values) {
-		int aux = 0;
+		int max = 0;
 		int count = 0;
+		int[] eval = IntStream.of(values).filter(n -> n != -1).toArray();
 
-		// Only can validate it if all the values are in
-		if (IntStream.of(values).anyMatch(n -> n == -1))
+		// Not enough values
+		if(eval.length < clue || values[0] == -1)
 			return true;
 
-		for (int value : values) {
-			if (value > aux) {
+		for (int value : eval) {
+			if (value > max) {
 				count++;
 
 				// I see more buildings than the clue
 				if (count > clue)
 					return false;
 
-				aux = value;
+				max = value;
 			}
 		}
 
-		return count == clue;
+		if(count < clue && max != SIZE)
+			return true;
+
+		return count == clue && max == SIZE;
 	}
 
 	private static boolean validateClues(int[][] clues, int[][] solution) {
