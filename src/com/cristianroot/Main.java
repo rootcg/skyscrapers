@@ -13,13 +13,13 @@ public class Main {
 			3, 2, 1, 3
 	};
 
+	private static int[][] splittedClues;
+
+	/**
+	 * Main method, equivalent to 'solvePuzzle' method of the kata
+	 */
 	public static void main(String[] args) {
-		int[][] splittedClues = new int[4][4];
-		for (int i = 0; i < clues.length; i++) {
-			splittedClues[i / 4][i % 4] = clues[i];
-		}
-		reverse(splittedClues[2]);
-		reverse(splittedClues[3]);
+		splittedClues = splitClues(clues);
 
 		int[][] solution = new int[4][4];
 		for (int i = 0; i < solution.length; i++) {
@@ -28,13 +28,23 @@ public class Main {
 			}
 		}
 
-		solveRecursive(0, 0, solution, splittedClues);
+		solveRecursive(0, 0, solution);
 
 		print(solution);
 		System.out.println("Valid: " + validate(splittedClues, solution));
 	}
 
-	private static boolean solveRecursive(int i, int j, int[][] solution, int[][] clues) {
+	private static int[][] splitClues(int[] clues) {
+		int[][] splittedClues = new int[4][4];
+		for (int i = 0; i < clues.length; i++) {
+			splittedClues[i / 4][i % 4] = clues[i];
+		}
+		reverse(splittedClues[2]);
+		reverse(splittedClues[3]);
+		return splittedClues;
+	}
+
+	private static boolean solveRecursive(int i, int j, int[][] solution) {
 		List<Integer> possibilities = new ArrayList<>();
 		possibilities.add(1);
 		possibilities.add(2);
@@ -55,7 +65,7 @@ public class Main {
 
 		do {
 			solution[i][j] = possibilities.remove(0);
-			solved = validate(clues, solution) && solveRecursive(i, j + 1, solution, clues);
+			solved = validate(splittedClues, solution) && solveRecursive(i, j + 1, solution);
 		} while (!solved && !possibilities.isEmpty());
 
 		if (!solved)
@@ -75,11 +85,12 @@ public class Main {
 				column[j] = solution[j][i];
 			}
 			for (int k = 0; k < column.length - 1; k++) {
-				if (column[k] != -1) {
-					for (int j = k + 1; j < column.length; j++) {
-						if (column[k] == column[j])
-							return false;
-					}
+				if (column[k] == -1)
+					continue;
+
+				for (int j = k + 1; j < column.length; j++) {
+					if (column[k] == column[j])
+						return false;
 				}
 			}
 		}
@@ -89,16 +100,40 @@ public class Main {
 	private static boolean validateRows(int[][] solution) {
 		for (int[] ints : solution) {
 			for (int i = 0; i < ints.length - 1; i++) {
-				if (ints[i] != -1) {
-					for (int j = i + 1; j < ints.length; j++) {
-						if (ints[i] == ints[j])
-							return false;
-					}
+				if (ints[i] == -1)
+					continue;
+
+				for (int j = i + 1; j < ints.length; j++) {
+					if (ints[i] == ints[j])
+						return false;
 				}
 			}
 		}
 
 		return true;
+	}
+
+	private static boolean validateClue(int clue, int[] values) {
+		int aux = 0;
+		int count = 0;
+
+		// Only can validate it if all the values are in
+		if (IntStream.of(values).anyMatch(n -> n == -1))
+			return true;
+
+		for (int value : values) {
+			if (value > aux) {
+				count++;
+
+				// I see more buildings than the clue
+				if (count > clue)
+					return false;
+
+				aux = value;
+			}
+		}
+
+		return count == clue;
 	}
 
 	private static boolean validateClues(int[][] clues, int[][] solution) {
@@ -110,29 +145,13 @@ public class Main {
 			if (cluePortion[i] == 0)
 				continue;
 
-			int aux = 0;
-			int count = 0;
-
 			int[] evaluate = new int[4];
 			for (int j = 0; j < solution.length; j++) {
 				evaluate[j] = solution[j][i];
 			}
 
-			if (IntStream.of(evaluate).filter(n -> n != -1).count() == 4) {
-				for (int value : evaluate) {
-					if (value > aux) {
-						count++;
-
-						// I see more buildings than the clue
-						if (count > cluePortion[i])
-							return false;
-
-						aux = value;
-					}
-				}
-				if (count != cluePortion[i])
-					return false;
-			}
+			if(!validateClue(cluePortion[i], evaluate))
+				return false;
 		}
 
 		// Right to left
@@ -141,29 +160,13 @@ public class Main {
 			if (cluePortion[i] == 0)
 				continue;
 
-			int aux = 0;
-			int count = 0;
-
 			int[] evaluate = new int[4];
 			for (int j = solution.length - 1; j >= 0; j--) {
 				evaluate[solution.length - 1 - j] = solution[i][j];
 			}
 
-			if (IntStream.of(evaluate).filter(n -> n != -1).count() == 4) {
-				for (int value : evaluate) {
-					if (value > aux) {
-						count++;
-
-						// I see more buildings than the clue
-						if (count > cluePortion[i])
-							return false;
-
-						aux = value;
-					}
-				}
-				if (count != cluePortion[i])
-					return false;
-			}
+			if(!validateClue(cluePortion[i], evaluate))
+				return false;
 		}
 
 		// Bottom to top
@@ -172,29 +175,13 @@ public class Main {
 			if (cluePortion[i] == 0)
 				continue;
 
-			int aux = 0;
-			int count = 0;
-
 			int[] evaluate = new int[4];
 			for (int j = solution.length - 1; j >= 0; j--) {
 				evaluate[solution.length - 1 - j] = solution[j][i];
 			}
 
-			if (IntStream.of(evaluate).filter(n -> n != -1).count() == 4) {
-				for (int value : evaluate) {
-					if (value > aux) {
-						count++;
-
-						// I see more buildings than the clue
-						if (count > cluePortion[i])
-							return false;
-
-						aux = value;
-					}
-				}
-				if (count != cluePortion[i])
-					return false;
-			}
+			if(!validateClue(cluePortion[i], evaluate))
+				return false;
 		}
 
 		// Left to right
@@ -203,29 +190,13 @@ public class Main {
 			if (cluePortion[i] == 0)
 				continue;
 
-			int aux = 0;
-			int count = 0;
-
 			int[] evaluate = new int[4];
 			for (int j = 0; j < solution.length; j++) {
 				evaluate[j] = solution[i][j];
 			}
 
-			if (IntStream.of(evaluate).filter(n -> n != -1).count() == 4) {
-				for (int value : evaluate) {
-					if (value > aux) {
-						count++;
-
-						// I see more buildings than the clue
-						if (count > cluePortion[i])
-							return false;
-
-						aux = value;
-					}
-				}
-				if (count != cluePortion[i])
-					return false;
-			}
+			if(!validateClue(cluePortion[i], evaluate))
+				return false;
 		}
 
 		return true;
