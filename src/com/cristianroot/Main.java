@@ -1,19 +1,20 @@
 package com.cristianroot;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Main {
 
 	private static int[] clues = {
-			2, 2, 1, 3,
-			2, 2, 3, 1,
-			1, 2, 2, 3,
-			3, 2, 1, 3
+			0, 0, 1, 2,
+			0, 2, 0, 0,
+			0, 3, 0, 0,
+			0, 1, 0, 0
 	};
 
 	private static int[][] splittedClues;
+	private static final int SIZE = 4;
 
 	/**
 	 * Main method, equivalent to 'solvePuzzle' method of the kata
@@ -21,7 +22,7 @@ public class Main {
 	public static void main(String[] args) {
 		splittedClues = splitClues(clues);
 
-		int[][] solution = new int[4][4];
+		int[][] solution = new int[SIZE][SIZE];
 		for (int i = 0; i < solution.length; i++) {
 			for (int j = 0; j < solution[i].length; j++) {
 				solution[i][j] = -1;
@@ -34,44 +35,38 @@ public class Main {
 		System.out.println("Valid: " + validate(splittedClues, solution));
 	}
 
-	private static int[][] splitClues(int[] clues) {
-		int[][] splittedClues = new int[4][4];
-		for (int i = 0; i < clues.length; i++) {
-			splittedClues[i / 4][i % 4] = clues[i];
-		}
-		reverse(splittedClues[2]);
-		reverse(splittedClues[3]);
-		return splittedClues;
-	}
-
 	private static boolean solveRecursive(int i, int j, int[][] solution) {
-		List<Integer> possibilities = new ArrayList<>();
-		possibilities.add(1);
-		possibilities.add(2);
-		possibilities.add(3);
-		possibilities.add(4);
-		boolean solved;
-
-		if (i == 3 && j == 4)
+		if (i == solution.length - 1 && j == solution[i].length)
 			return true;
 
-		if (i == 4)
-			return false;
-
-		if (j == 4) {
+		if (j == solution[i].length) {
 			j = 0;
 			i++;
 		}
+
+		List<Integer> possibilities = IntStream.range(1, 5).boxed().collect(Collectors.toList());
+		boolean solved;
 
 		do {
 			solution[i][j] = possibilities.remove(0);
 			solved = validate(splittedClues, solution) && solveRecursive(i, j + 1, solution);
 		} while (!solved && !possibilities.isEmpty());
 
+		// Clean the number bc it's wrong
 		if (!solved)
 			solution[i][j] = -1;
 
 		return solved;
+	}
+
+	private static int[][] splitClues(int[] clues) {
+		int[][] splittedClues = new int[4][SIZE];
+		for (int i = 0; i < clues.length; i++) {
+			splittedClues[i / 4][i % SIZE] = clues[i];
+		}
+		reverse(splittedClues[2]);
+		reverse(splittedClues[3]);
+		return splittedClues;
 	}
 
 	private static boolean validate(int[][] clues, int[][] solution) {
@@ -150,7 +145,7 @@ public class Main {
 				evaluate[j] = solution[j][i];
 			}
 
-			if(!validateClue(cluePortion[i], evaluate))
+			if (!validateClue(cluePortion[i], evaluate))
 				return false;
 		}
 
@@ -165,7 +160,7 @@ public class Main {
 				evaluate[solution.length - 1 - j] = solution[i][j];
 			}
 
-			if(!validateClue(cluePortion[i], evaluate))
+			if (!validateClue(cluePortion[i], evaluate))
 				return false;
 		}
 
@@ -180,7 +175,7 @@ public class Main {
 				evaluate[solution.length - 1 - j] = solution[j][i];
 			}
 
-			if(!validateClue(cluePortion[i], evaluate))
+			if (!validateClue(cluePortion[i], evaluate))
 				return false;
 		}
 
@@ -195,7 +190,7 @@ public class Main {
 				evaluate[j] = solution[i][j];
 			}
 
-			if(!validateClue(cluePortion[i], evaluate))
+			if (!validateClue(cluePortion[i], evaluate))
 				return false;
 		}
 
