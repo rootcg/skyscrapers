@@ -29,10 +29,10 @@ public class Main {
 			}
 		}
 
+		long time = System.currentTimeMillis();
 		solveRecursive(0, 0, solution);
-
 		print(solution);
-		System.out.println("Valid: " + validate(splittedClues, solution));
+		System.out.println("Time: " + (System.currentTimeMillis() - time) / 1000);
 	}
 
 	private static boolean solveRecursive(int i, int j, int[][] solution) {
