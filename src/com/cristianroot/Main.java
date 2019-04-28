@@ -1,18 +1,26 @@
 package com.cristianroot;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Main {
 
+//	private static int[] clues = {
+//			3, 2, 2, 3, 2, 1,
+//			1, 2, 3, 3, 2, 2,
+//			5, 1, 2, 2, 4, 3,
+//			3, 2, 1, 2, 2, 4
+//	};
 	private static int[] clues = {
-			0, 0, 0, 2, 2, 0,
-			0, 0, 0, 6, 3, 0,
-			0, 4, 0, 0, 0, 0,
-			4, 4, 0, 3, 0, 0
+		0, 0, 0, 2, 2, 0,
+		0, 0, 0, 6, 3, 0,
+		0, 4, 0, 0, 0, 0,
+		4, 4, 0, 3, 0, 0
 	};
 
+	private static boolean[][] columnUsedNumbers;
+	private static boolean[][] rowUsedNumbers;
+	private static int[][] rows;
+	private static int[][] columns;
 	private static int[][] splittedClues;
 	private static final int SIZE = 6;
 
@@ -20,19 +28,25 @@ public class Main {
 	 * Main method, equivalent to 'solvePuzzle' method of the kata
 	 */
 	public static void main(String[] args) {
+		columnUsedNumbers = new boolean[SIZE][SIZE];
+		rowUsedNumbers = new boolean[SIZE][SIZE];
+		rows = new int[SIZE][SIZE];
+		columns = new int[SIZE][SIZE];
 		splittedClues = splitClues(clues);
 
 		int[][] solution = new int[SIZE][SIZE];
 		for (int i = 0; i < solution.length; i++) {
 			for (int j = 0; j < solution[i].length; j++) {
 				solution[i][j] = -1;
+				rows[i][j] = -1;
+				columns[i][j] = -1;
 			}
 		}
 
 		long time = System.currentTimeMillis();
 		solveRecursive(0, 0, solution);
 		print(solution);
-		System.out.println("Time: " + (System.currentTimeMillis() - time) / 1000);
+		System.out.println("Time: " + (System.currentTimeMillis() - time));
 	}
 
 	private static boolean solveRecursive(int i, int j, int[][] solution) {
@@ -44,17 +58,29 @@ public class Main {
 			i++;
 		}
 
-		List<Integer> possibilities = IntStream.range(1, SIZE + 1).boxed().collect(Collectors.toList());
-		boolean solved;
+		boolean solved = false;
+		int number = 1;
 
 		do {
-			solution[i][j] = possibilities.remove(0);
-			solved = validate(splittedClues, solution) && solveRecursive(i, j + 1, solution);
-		} while (!solved && !possibilities.isEmpty());
+			if((!rowUsedNumbers[i][number - 1] && !columnUsedNumbers[j][number - 1])) {
+				solution[i][j] = number;
+				rows[i][j] = number;
+				columns[j][i] = number;
+				rowUsedNumbers[i][number - 1] = true;
+				columnUsedNumbers[j][number - 1] = true;
 
-		// Clean the number bc it's wrong
-		if (!solved)
-			solution[i][j] = -1;
+				solved = validateClues(splittedClues, solution) && solveRecursive(i, j + 1, solution);
+
+				if (!solved) {
+					solution[i][j] = -1;
+					rows[i][j] = -1;
+					columns[j][i] = -1;
+					rowUsedNumbers[i][number - 1] = false;
+					columnUsedNumbers[j][number - 1] = false;
+				}
+			}
+			number++;
+		} while (!solved && number <= SIZE);
 
 		return solved;
 	}
@@ -69,52 +95,16 @@ public class Main {
 		return splittedClues;
 	}
 
-	private static boolean validate(int[][] clues, int[][] solution) {
-		return validateRows(solution) && validateColumns(solution) && validateClues(clues, solution);
-	}
-
-	private static boolean validateColumns(int[][] solution) {
-		for (int i = 0; i < solution.length; i++) {
-			int[] column = new int[SIZE];
-			for (int j = 0; j < solution[i].length; j++) {
-				column[j] = solution[j][i];
-			}
-			for (int k = 0; k < column.length - 1; k++) {
-				if (column[k] == -1)
-					continue;
-
-				for (int j = k + 1; j < column.length; j++) {
-					if (column[k] == column[j])
-						return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	private static boolean validateRows(int[][] solution) {
-		for (int[] ints : solution) {
-			for (int i = 0; i < ints.length - 1; i++) {
-				if (ints[i] == -1)
-					continue;
-
-				for (int j = i + 1; j < ints.length; j++) {
-					if (ints[i] == ints[j])
-						return false;
-				}
-			}
-		}
-
-		return true;
-	}
-
-	private static boolean validateClue(int clue, int[] values) {
+	private static boolean validateClue(int clue, int[] values, boolean reverse) {
 		int max = 0;
 		int count = 0;
 		int[] eval = IntStream.of(values).filter(n -> n != -1).toArray();
 
+		if(reverse)
+			reverse(eval);
+
 		// Not enough values
-		if(eval.length < clue || values[0] == -1)
+		if(eval.length < clue || (reverse ? values[values.length - 1] : values[0]) == -1)
 			return true;
 
 		for (int value : eval) {
@@ -144,12 +134,7 @@ public class Main {
 			if (cluePortion[i] == 0)
 				continue;
 
-			int[] evaluate = new int[SIZE];
-			for (int j = 0; j < solution.length; j++) {
-				evaluate[j] = solution[j][i];
-			}
-
-			if (!validateClue(cluePortion[i], evaluate))
+			if (!validateClue(cluePortion[i], columns[i], false))
 				return false;
 		}
 
@@ -159,12 +144,7 @@ public class Main {
 			if (cluePortion[i] == 0)
 				continue;
 
-			int[] evaluate = new int[SIZE];
-			for (int j = solution.length - 1; j >= 0; j--) {
-				evaluate[solution.length - 1 - j] = solution[i][j];
-			}
-
-			if (!validateClue(cluePortion[i], evaluate))
+			if (!validateClue(cluePortion[i], rows[i], true))
 				return false;
 		}
 
@@ -174,12 +154,7 @@ public class Main {
 			if (cluePortion[i] == 0)
 				continue;
 
-			int[] evaluate = new int[SIZE];
-			for (int j = solution.length - 1; j >= 0; j--) {
-				evaluate[solution.length - 1 - j] = solution[j][i];
-			}
-
-			if (!validateClue(cluePortion[i], evaluate))
+			if (!validateClue(cluePortion[i], columns[i], true))
 				return false;
 		}
 
@@ -189,16 +164,19 @@ public class Main {
 			if (cluePortion[i] == 0)
 				continue;
 
-			int[] evaluate = new int[SIZE];
-			for (int j = 0; j < solution.length; j++) {
-				evaluate[j] = solution[i][j];
-			}
-
-			if (!validateClue(cluePortion[i], evaluate))
+			if (!validateClue(cluePortion[i], rows[i], false))
 				return false;
 		}
 
 		return true;
+	}
+
+	private static void reverse(int[] arr) {
+		for (int i = 0; i < arr.length / 2; i++) {
+			int temp = arr[i];
+			arr[i] = arr[arr.length - i - 1];
+			arr[arr.length - i - 1] = temp;
+		}
 	}
 
 	private static void print(int[][] arr) {
@@ -219,14 +197,6 @@ public class Main {
 		}
 
 		System.out.println();
-	}
-
-	private static void reverse(int[] arr) {
-		for (int i = 0; i < arr.length / 2; i++) {
-			int temp = arr[i];
-			arr[i] = arr[arr.length - i - 1];
-			arr[arr.length - i - 1] = temp;
-		}
 	}
 
 }
