@@ -1,7 +1,5 @@
 package com.cristianroot;
 
-import java.util.stream.IntStream;
-
 public class Main {
 
 //	private static int[] clues = {
@@ -28,6 +26,8 @@ public class Main {
 	 * Main method, equivalent to 'solvePuzzle' method of the kata
 	 */
 	public static void main(String[] args) {
+		long time = System.currentTimeMillis();
+
 		columnUsedNumbers = new boolean[SIZE][SIZE];
 		rowUsedNumbers = new boolean[SIZE][SIZE];
 		rows = new int[SIZE][SIZE];
@@ -43,33 +43,35 @@ public class Main {
 			}
 		}
 
-		long time = System.currentTimeMillis();
 		solveRecursive(0, 0, solution);
-		print(solution);
 		System.out.println("Time: " + (System.currentTimeMillis() - time));
+
+		print(solution);
 	}
 
 	private static boolean solveRecursive(int i, int j, int[][] solution) {
-		if (i == solution.length - 1 && j == solution[i].length)
-			return true;
-
 		if (j == solution[i].length) {
+			if(i == solution.length - 1)
+				return true;
+
 			j = 0;
 			i++;
 		}
 
 		boolean solved = false;
 		int number = 1;
+		int arrNumber;
 
 		do {
-			if((!rowUsedNumbers[i][number - 1] && !columnUsedNumbers[j][number - 1])) {
+			arrNumber = number -1;
+			if((!rowUsedNumbers[i][arrNumber] && !columnUsedNumbers[j][arrNumber])) {
 				solution[i][j] = number;
 				rows[i][j] = number;
 				columns[j][i] = number;
-				rowUsedNumbers[i][number - 1] = true;
-				columnUsedNumbers[j][number - 1] = true;
+				rowUsedNumbers[i][arrNumber] = true;
+				columnUsedNumbers[j][arrNumber] = true;
 
-				solved = validateClues(splittedClues, solution) && solveRecursive(i, j + 1, solution);
+				solved = validateClues(splittedClues, i, j) && solveRecursive(i, j + 1, solution);
 
 				if (!solved) {
 					solution[i][j] = -1;
@@ -90,93 +92,64 @@ public class Main {
 		for (int i = 0; i < clues.length; i++) {
 			splittedClues[i / SIZE][i % SIZE] = clues[i];
 		}
-		reverse(splittedClues[2]);
-		reverse(splittedClues[3]);
+		splittedClues[2] = copyReverse(splittedClues[2]);
+		splittedClues[3] = copyReverse(splittedClues[3]);
 		return splittedClues;
 	}
 
 	private static boolean validateClue(int clue, int[] values, boolean reverse) {
-		int max = 0;
-		int count = 0;
-		int[] eval = IntStream.of(values).filter(n -> n != -1).toArray();
-
 		if(reverse)
-			reverse(eval);
+			values = copyReverse(values);
 
 		// Not enough values
-		if(eval.length < clue || (reverse ? values[values.length - 1] : values[0]) == -1)
+		if(values[0] == -1)
 			return true;
 
-		for (int value : eval) {
-			if (value > max) {
-				count++;
-
-				// I see more buildings than the clue
-				if (count > clue)
-					return false;
-
-				max = value;
+		int evalLength = 0;
+		int max = 0;
+		int count = 0;
+		for (int value : values) {
+			if(value != -1) {
+				evalLength++;
+				if (value > max) {
+					count++;
+					max = value;
+				}
 			}
 		}
 
-		if(count < clue && max != SIZE)
+		if(evalLength < clue || (count < clue && max != SIZE))
 			return true;
 
 		return count == clue && max == SIZE;
 	}
 
-	private static boolean validateClues(int[][] clues, int[][] solution) {
-		int[] cluePortion;
-
+	private static boolean validateClues(int[][] clues, int r, int c) {
 		// Top to bottom
-		cluePortion = clues[0];
-		for (int i = 0; i < cluePortion.length; i++) {
-			if (cluePortion[i] == 0)
-				continue;
-
-			if (!validateClue(cluePortion[i], columns[i], false))
-				return false;
-		}
+		if (clues[0][c] != 0 && !validateClue(clues[0][c], columns[c], false))
+			return false;
 
 		// Right to left
-		cluePortion = clues[1];
-		for (int i = 0; i < cluePortion.length; i++) {
-			if (cluePortion[i] == 0)
-				continue;
-
-			if (!validateClue(cluePortion[i], rows[i], true))
-				return false;
-		}
+		if (clues[1][r] != 0 && !validateClue(clues[1][r], rows[r], true))
+			return false;
 
 		// Bottom to top
-		cluePortion = clues[2];
-		for (int i = 0; i < cluePortion.length; i++) {
-			if (cluePortion[i] == 0)
-				continue;
-
-			if (!validateClue(cluePortion[i], columns[i], true))
-				return false;
-		}
+		if (clues[2][c] != 0 && !validateClue(clues[2][c], columns[c], true))
+			return false;
 
 		// Left to right
-		cluePortion = clues[3];
-		for (int i = 0; i < cluePortion.length; i++) {
-			if (cluePortion[i] == 0)
-				continue;
+		return clues[3][r] == 0 || validateClue(clues[3][r], rows[r], false);
 
-			if (!validateClue(cluePortion[i], rows[i], false))
-				return false;
-		}
-
-		return true;
 	}
 
-	private static void reverse(int[] arr) {
-		for (int i = 0; i < arr.length / 2; i++) {
-			int temp = arr[i];
-			arr[i] = arr[arr.length - i - 1];
-			arr[arr.length - i - 1] = temp;
+	private static int[] copyReverse(int[] arr) {
+		int[] newArr = new int[arr.length];
+		int j = 0;
+		for (int i = arr.length - 1; i >= 0; i--) {
+			newArr[j] = arr[i];
+			j++;
 		}
+		return newArr;
 	}
 
 	private static void print(int[][] arr) {
